@@ -1,0 +1,16 @@
+[
+  {
+    "id": "1",
+    "name": "Admin User",
+    "email": "admin@example.com",
+    "password": "$2b$10$ijaZKmQiN1CVeZV/MvTNFeNEEcOjggntCa5sLZ.4/75Iu8VKH3vy2",
+    "image": null,
+    "role": "admin",
+    "createdAt": 1685577600000,
+    "updatedAt": 1685577600000,
+    "preferences": {
+      "notifications": { "email": true, "inApp": true },
+      "theme": "system"
+    }
+  }
+]
