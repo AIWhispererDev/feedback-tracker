@@ -1,0 +1,487 @@
+{
+  "General Positive Feedback": [
+    {
+      "text": "Everything looks great.",
+      "author": "0xl"
+    },
+    {
+      "text": "Everything works well, stable and smooth, not found any error.",
+      "author": "gar"
+    },
+    {
+      "text": "Everything works fine now (initial connection problem solved by reload).",
+      "author": ".ni"
+    },
+    {
+      "text": "Everything is great.",
+      "author": "cha"
+    },
+    {
+      "text": "It's really cool, I'm impressed.",
+      "author": "uic"
+    },
+    {
+      "text": "Looks amazing.",
+      "author": "ten"
+    },
+    {
+      "text": "Completed almost all tasks, not a single lag or bug detected.",
+      "author": "spi"
+    },
+    {
+      "text": "Nice UI and UX.",
+      "author": "gio"
+    },
+    {
+      "text": "Works great, stylish design, convenient features (wallet connection, NFT collections).",
+      "author": "ant"
+    },
+    {
+      "text": "The best UI, UX Airdrop project ever.",
+      "author": "pet"
+    },
+    {
+      "text": "100x smoother than v1, worth the wait.",
+      "author": "har"
+    },
+    {
+      "text": "Positive experience, no problems found, daily quests work, appreciates moving away from Galxe.",
+      "author": "spi"
+    },
+    {
+      "text": "Likes the site generally.",
+      "author": "spa"
+    },
+    {
+      "text": "All functions work correctly.",
+      "author": "moh"
+    },
+    {
+      "text": "Going well so far.",
+      "author": "max"
+    },
+    {
+      "text": "Smooth experience.",
+      "author": "mer"
+    },
+    {
+      "text": "Fast task completion today.",
+      "author": "sos"
+    },
+    {
+      "text": "Going smoothly so far.",
+      "author": "kot"
+    },
+    {
+      "text": "Going like clockwork.",
+      "author": "pov"
+    },
+    {
+      "text": "Cool experience.",
+      "author": "car"
+    },
+    {
+      "text": "Awesome.",
+      "author": "pet"
+    },
+    {
+      "text": "Good work.",
+      "author": "bur"
+    },
+    {
+      "text": "Loves it.",
+      "author": "tom"
+    },
+    {
+      "text": "Fine now.",
+      "author": "ner"
+    },
+    {
+      "text": "pV 2 works NP (No Problem).",
+      "author": "nej"
+    },
+    {
+      "text": "Verification process worked fine.",
+      "author": "muc"
+    },
+    {
+      "text": "Nightly wallet inbuilt swap works seamlessly.",
+      "author": "cry"
+    },
+    {
+      "text": "Great development, very smooth and time saving.",
+      "author": "pro"
+    },
+    {
+      "text": "Smooth for me so far pv2.",
+      "author": "aku"
+    },
+    {
+      "text": "v2 is cool guys, everything works fine.",
+      "author": "goo"
+    }
+  ],
+  "General Negative Feedback": [
+    {
+      "text": "Design is terrible.",
+      "author": "sei"
+    },
+    {
+      "text": "Bad experience due to unresolved issues / transactions not working.",
+      "author": "zam"
+    },
+    {
+      "text": "Old UI UX was much easier to work with; V2 doesn't look like a user-friendly questing page.",
+      "author": "fla"
+    }
+  ],
+  "Issues & Bug Reports": [],
+  "Performance": [
+    {
+      "text": "Site is a bit slow, like 25 FPS.",
+      "author": "0xl"
+    },
+    {
+      "text": "Opening NFT details takes a long time.",
+      "author": ".ni"
+    },
+    {
+      "text": "Task verification sometimes slow and buggy / takes too long / requires multiple clicks.",
+      "author": "spa"
+    }
+  ],
+  "Login/Wallet Connection": [
+    {
+      "text": "Site prompts for wallet connection initially.",
+      "author": "kin"
+    },
+    {
+      "text": "Wallet connection issue / Can't connect wallet (Nightly wallet pop-up doesn't appear).",
+      "author": "emj"
+    },
+    {
+      "text": "Difficulty logging back in / Hard to login.",
+      "author": "ace"
+    },
+    {
+      "text": "Persistent login error / Unable to log in for days.",
+      "author": "cop"
+    },
+    {
+      "text": "Login failing at signature step due to server error (worked previously).",
+      "author": "cry"
+    },
+    {
+      "text": "Login stopped working today.",
+      "author": "ant"
+    },
+    {
+      "text": "OKX EVM wallet connection failed.",
+      "author": "vel"
+    },
+    {
+      "text": "Razor wallet sometimes needs multiple approvals or doesn't pop up for login.",
+      "author": "mrb"
+    },
+    {
+      "text": "Login failed with primary wallet but worked with secondary wallet.",
+      "author": "arj"
+    },
+    {
+      "text": "Nightly wallet connection response is slow, but usually works.",
+      "author": "cra"
+    },
+    {
+      "text": "Wallet not recognized despite being the correct one.",
+      "author": "arj"
+    },
+    {
+      "text": "Cannot connect wallet (Nightly/Razor) for quests.",
+      "author": "dem"
+    }
+  ],
+  "Quest/Task Verification": [
+    {
+      "text": "Username change not working.",
+      "author": "0xl"
+    },
+    {
+      "text": "NFT verification (31DOM) issues (saying user doesn't have enough when they do).",
+      "author": "rak"
+    },
+    {
+      "text": "NFT verification issue (generic).",
+      "author": "fir"
+    },
+    {
+      "text": "Role-based quests (Discord role, Movers, Subredditor) not verifying correctly.",
+      "author": "_me"
+    },
+    {
+      "text": "A quest was marked as verified/complete without the user performing the action.",
+      "author": "sap"
+    },
+    {
+      "text": "Transaction quest not verifying.",
+      "author": "seg"
+    },
+    {
+      "text": "Avatar change quest not working / picture doesn't save / resets after refresh.",
+      "author": "ash"
+    },
+    {
+      "text": "Follow tasks (X/Reddit) not granting XP despite connection.",
+      "author": "trl"
+    },
+    {
+      "text": "Daily streak claim button not working.",
+      "author": "xar"
+    },
+    {
+      "text": "Moveusly NFTs not being counted for \"Movement NFT\" quests.",
+      "author": "ono"
+    },
+    {
+      "text": "NFT collection quests (hold 3/5/7/12 different collections) not verifying correctly.",
+      "author": "hod"
+    },
+    {
+      "text": "NFTs listed for sale don't count for verification quests.",
+      "author": "hod"
+    },
+    {
+      "text": "Social verification tasks (Discord, Reddit, X) not working or requiring multiple attempts/refreshes.",
+      "author": "gen"
+    },
+    {
+      "text": "Daily transaction tasks (using multiple apps) not verifying.",
+      "author": "the"
+    },
+    {
+      "text": "Daily streak counter reset incorrectly mid-week / Daily streak broken.",
+      "author": "sla"
+    },
+    {
+      "text": "Badge for specific role (e.g., Founder AMA) not received despite having the role.",
+      "author": "cry"
+    }
+  ],
+  "UI/UX Issues": [
+    {
+      "text": "Daily streak counter problematic (needs specific clicks).",
+      "author": "0xl"
+    },
+    {
+      "text": "Quest progress display seems incorrect/confusing (e.g., 8/12, 7/11).",
+      "author": ".ni"
+    },
+    {
+      "text": "Possibly missing a task in a set.",
+      "author": ".ni"
+    },
+    {
+      "text": "Constant pop-up notifications are annoying/problematic.",
+      "author": "rak"
+    },
+    {
+      "text": "Bad design, poor contrast in a specific UI element.",
+      "author": ".ni"
+    },
+    {
+      "text": "An element is not centered.",
+      "author": ".ni"
+    },
+    {
+      "text": "Double scrollbar appearing in Chrome browser.",
+      "author": ".ni"
+    },
+    {
+      "text": "Issue with \"Back to top\" button functionality.",
+      "author": ".ni"
+    },
+    {
+      "text": "Verification only works after clicking \"Begin\" button first.",
+      "author": "ath"
+    },
+    {
+      "text": "Text readability issue on mobile (Mises Browser).",
+      "author": "dfa"
+    },
+    {
+      "text": "Token display issue in wallet (within Parthenon interface or connected wallet interaction).",
+      "author": "ges"
+    },
+    {
+      "text": "Reddit loading image (Narwhal) appears randomly when opening tabs.",
+      "author": "8bi"
+    },
+    {
+      "text": "An NFT image/data is not loading in the profile/collection view.",
+      "author": "sei"
+    },
+    {
+      "text": "Incorrect text (\"TELEGRAM\" instead of \"X\") on a button/task.",
+      "author": "kan"
+    },
+    {
+      "text": "Daily streak UI doesn't show accumulated days, resets display weekly (starts Sunday).",
+      "author": "sos"
+    }
+  ],
+  "Multi-Wallet Issues": [
+    {
+      "text": "Connecting multiple wallets doesn't sum NFT counts; uses count from one wallet (smallest? primary?).",
+      "author": "uic"
+    },
+    {
+      "text": "NFT counts might be taken only from the primary connected wallet.",
+      "author": "rak"
+    },
+    {
+      "text": "NFT verification issue possibly linked to checking auxiliary wallet instead of main one.",
+      "author": "web"
+    },
+    {
+      "text": "Secondary wallet connection caused NFT verification from main wallet to fail.",
+      "author": "tou"
+    },
+    {
+      "text": "Transactions from secondary wallets might not count for quests.",
+      "author": "ban"
+    },
+    {
+      "text": "NFT verification for 31DOM only considers the main wallet.",
+      "author": "ban"
+    }
+  ],
+  "Ecosystem DApp/Wallet Interaction Issues": [
+    {
+      "text": "Some DEXes not working for transactions (Meridian, CanopySwap, Wrapgate, RouteX mentioned specifically with errors or balance detection issues).",
+      "author": "spa"
+    },
+    {
+      "text": "Balance display issues on Tradeport and RouteX preventing transactions.",
+      "author": "kur"
+    },
+    {
+      "text": "Incorrect link for Blazpay app.",
+      "author": "rip"
+    },
+    {
+      "text": "Supplying assets on Arche protocol not working.",
+      "author": "emm"
+    },
+    {
+      "text": "Razor swap function not working.",
+      "author": "sid"
+    },
+    {
+      "text": "Swap function within Razor wallet not working.",
+      "author": ".ax"
+    },
+    {
+      "text": "Swap transactions give \"Transaction expired\" error (Nightly/Razor).",
+      "author": "sny"
+    },
+    {
+      "text": "Swap on Mosaic pending indefinitely.",
+      "author": "laz"
+    },
+    {
+      "text": "Wallet connection/transactions with dApps not working.",
+      "author": "zam"
+    }
+  ],
+  "Other Specific Issues": [
+    {
+      "text": "Reddit connection caused high CPU usage and excessive pop-ups initially.",
+      "author": "bar"
+    },
+    {
+      "text": "Discord pop-up notification appears for every transaction (likely from external Indexer bot).",
+      "author": "ros"
+    },
+    {
+      "text": "Cannot verify 31DOM quest despite having >18 NFTs in one wallet when second wallet is connected.",
+      "author": "ban"
+    }
+  ],
+  "Suggestions & Feature Requests": [
+    {
+      "text": "Suggestion: Move \"Collections\" section to be a tab under 1.2.",
+      "author": ".ni"
+    },
+    {
+      "text": "Suggestion: Make cards flip when clicking outside the button area.",
+      "author": ".ni"
+    },
+    {
+      "text": "Suggestion: Make filter/search bar sticky during scroll.",
+      "author": ".ni"
+    },
+    {
+      "text": "Suggestion: Make \"Back to top\" button sticky in bottom-right.",
+      "author": ".ni"
+    },
+    {
+      "text": "Suggestion: Ability to change the primary/default wallet.",
+      "author": "rak"
+    },
+    {
+      "text": "Suggestion: More detailed HP info for newbies.",
+      "author": "ant"
+    },
+    {
+      "text": "Suggestion: Potentially remove referral system for fairness.",
+      "author": "ant"
+    },
+    {
+      "text": "Suggestion: Improve username change error message to be specific about the reason.",
+      "author": "ilu"
+    },
+    {
+      "text": "Suggestion: Add staking quests (with debate on XP calculation method).",
+      "author": "joh"
+    },
+    {
+      "text": "Suggestion: Add specific badge for Arkai NFT holders.",
+      "author": "jzy"
+    },
+    {
+      "text": "Suggestion: Add support for more wallets (Bitget mentioned).",
+      "author": "air"
+    },
+    {
+      "text": "Suggestion: Add direct links from NFT quests to the marketplace where the NFT can be acquired.",
+      "author": "tet"
+    },
+    {
+      "text": "Suggestion: Find a way to avoid logging in every time.",
+      "author": "mrb"
+    },
+    {
+      "text": "Suggestion: Add verified links to dApps within quests.",
+      "author": "mir"
+    },
+    {
+      "text": "Suggestion: More functional applications needed in the ecosystem section.",
+      "author": "ner"
+    },
+    {
+      "text": "Suggestion: Disable hCaptcha due to login problems.",
+      "author": "lii"
+    },
+    {
+      "text": "Suggestion: Improve NFT verification to count NFTs listed for sale (like Discord role bots).",
+      "author": "hod"
+    },
+    {
+      "text": "Suggestion: Clearer text for the daily streak quest explanation.",
+      "author": "izn"
+    },
+    {
+      "text": "Suggestion: Use Galxe again.",
+      "author": "seg"
+    }
+  ]
+}

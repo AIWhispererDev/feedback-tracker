@@ -22,9 +22,9 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const navItems = [
-    { name: "Home", href: "/" },
-    { name: "About", href: "/about" },
-    { name: "Contact", href: "/contact" },
+    // { name: "Home", href: "/" },
+    // { name: "About", href: "/about" },
+    // { name: "Contact", href: "/contact" },
   ]
 
   return (
