@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FeedbackForm } from "./components/FeedbackForm"
 import { FeedbackList } from "./components/FeedbackList"
 import { AdminPanel } from "./components/AdminPanel"
+import DiscordFeedback from "./components/DiscordFeedback"
 
 export default function Home() {
   const { data: session } = useSession()
@@ -31,6 +32,7 @@ export default function Home() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
         <TabsList>
           <TabsTrigger value="feedback">Feedback</TabsTrigger>
+          <TabsTrigger value="discord">Discord Logs</TabsTrigger>
           {session?.user?.role === "admin" && (
             <TabsTrigger value="admin">Admin Panel</TabsTrigger>
           )}
@@ -40,6 +42,9 @@ export default function Home() {
             <FeedbackForm />
             <FeedbackList />
           </div>
+        </TabsContent>
+        <TabsContent value="discord">
+          <DiscordFeedback />
         </TabsContent>
         {session?.user?.role === "admin" && (
           <TabsContent value="admin">
