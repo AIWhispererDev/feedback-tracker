@@ -303,6 +303,11 @@ export async function checkForDuplicates(
 }
 
 export async function submitFeedback(formData: FormData, ip?: string, userAgent?: string) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return { error: "Unauthorized" }
+  }
+
   const title = formData.get("title") as string
   const description = formData.get("description") as string
   const category = (formData.get("category") as FeedbackCategory) || "general"
@@ -312,9 +317,6 @@ export async function submitFeedback(formData: FormData, ip?: string, userAgent?
   if (!title || !description) {
     return { error: "Title and description are required" }
   }
-
-  // Get current user session
-  const session = await getServerSession(authOptions)
 
   // Check for duplicates if not forcing submission
   if (!forceDuplicate) {
@@ -351,9 +353,9 @@ export async function submitFeedback(formData: FormData, ip?: string, userAgent?
     downvotes: 0,
     date: new Date().toISOString().split("T")[0], // Current date in YYYY-MM-DD format
     submitterInfo: {
-      userId: session?.user?.id,
-      userName: session?.user?.name,
-      userImage: session?.user?.image,
+      userId: session.user.id,
+      userName: session.user.name,
+      userImage: session.user.image,
       ip: !session ? ip : undefined,
       userAgent,
       timestamp: Date.now(),
@@ -495,6 +497,9 @@ export async function changeFeedbackStatus(
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) {
     throw new Error('Unauthorized')
+  }
+  if (session.user.role === "user") {
+    throw new Error('Forbidden')
   }
   const { error } = await supabaseAdmin.rpc('change_feedback_status', {
     p_feedback_id: feedbackId,

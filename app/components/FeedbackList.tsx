@@ -18,6 +18,7 @@ import { getFeedbackList, voteFeedback, mergeFeedback, changeFeedbackStatus } fr
 import type { Feedback, FeedbackStatus } from "../actions/feedback"
 import { StatusBadge } from "@/components/ui/StatusBadge"
 import { Textarea } from "@/components/ui/textarea"
+import { useSession } from "next-auth/react"
 
 type SortOption = "recent" | "upvotes"
 type ViewOption = "active" | "all"
@@ -37,6 +38,7 @@ export function FeedbackList() {
     newStatus: FeedbackStatus | null
     reason: string
   }>({ open: false, feedbackId: null, newStatus: null, reason: "" })
+  const { data: session } = useSession()
 
   // Map current status to allowed next statuses
   const statusTransitions: Record<FeedbackStatus, { label: string; value: FeedbackStatus }[]> = {
@@ -180,30 +182,32 @@ export function FeedbackList() {
               <div className="flex items-center gap-2">
                 <StatusBadge status={feedback.status} />
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {feedback.status === 'active' && (
-                      <DropdownMenuItem onClick={() => openMergeDialog(feedback.id)}>
-                        Merge with another
-                      </DropdownMenuItem>
-                    )}
-                    {statusTransitions[feedback.status]?.map(({ label, value }) => (
-                      <DropdownMenuItem key={value} onClick={() => openStatusDialog(feedback.id, value)}>
-                        {label}
-                      </DropdownMenuItem>
-                    ))}
-                    {!statusTransitions[feedback.status] && feedback.status !== 'active' && (
-                      <DropdownMenuItem onClick={() => openStatusDialog(feedback.id, 'active')}>
-                        Mark as active
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {(session?.user?.role === "admin" || session?.user?.role === "moderator") && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {feedback.status === 'active' && (
+                        <DropdownMenuItem onClick={() => openMergeDialog(feedback.id)}>
+                          Merge with another
+                        </DropdownMenuItem>
+                      )}
+                      {statusTransitions[feedback.status]?.map(({ label, value }) => (
+                        <DropdownMenuItem key={value} onClick={() => openStatusDialog(feedback.id, value)}>
+                          {label}
+                        </DropdownMenuItem>
+                      ))}
+                      {!statusTransitions[feedback.status] && feedback.status !== 'active' && (
+                        <DropdownMenuItem onClick={() => openStatusDialog(feedback.id, 'active')}>
+                          Mark as active
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
             </div>
 

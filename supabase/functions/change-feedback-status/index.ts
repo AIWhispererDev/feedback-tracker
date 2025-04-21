@@ -20,6 +20,19 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Invalid user" }), { status: 401 });
     }
 
+    // Restrict status changes to moderators and admins only
+    const { data: userRow, error: userRowError } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", userData.user.id)
+      .single();
+    if (userRowError || !userRow) {
+      return new Response(JSON.stringify({ error: "User not found" }), { status: 404 });
+    }
+    if (userRow.role === "user") {
+      return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
+    }
+
     // Call the status-change RPC
     const { error } = await supabase.rpc("change_feedback_status", {
       p_feedback_id: feedback_id,
