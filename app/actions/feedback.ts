@@ -350,7 +350,6 @@ export async function submitFeedback(formData: FormData, ip?: string, userAgent?
     upvotes: 0,
     downvotes: 0,
     date: new Date().toISOString().split("T")[0], // Current date in YYYY-MM-DD format
-    status: "active",
     submitterInfo: {
       userId: session?.user?.id,
       userName: session?.user?.name,
@@ -368,9 +367,18 @@ export async function submitFeedback(formData: FormData, ip?: string, userAgent?
       : [],
   }
 
+  // Insert without explicit status; rely on DB default
+  const insertPayload: any = { ...newFeedback }
+  // Remove status (DB default) and map duplicate logs to JSONB column
+  delete insertPayload.status
+  delete insertPayload.id
+  insertPayload['similarity_checks'] = insertPayload.similarityChecks
+  delete insertPayload.similarityChecks
+  insertPayload['submitter_info'] = insertPayload.submitterInfo
+  delete insertPayload.submitterInfo
   const { data: insertedFeedback, error: insertError } = await supabaseAdmin
     .from<Feedback>(feedbackTable)
-    .insert(newFeedback)
+    .insert(insertPayload)
     .single()
   if (insertError) throw insertError
   revalidatePath("/")
@@ -462,27 +470,41 @@ export async function mergeFeedback(sourceId: number, targetId: number, logId?: 
   return { success: true }
 }
 
-export async function updateFeedbackStatus(id: number, status: FeedbackStatus) {
-  const { error } = await supabaseAdmin
-    .from<Feedback>(feedbackTable)
-    .update({ status })
-    .eq("id", id)
-  if (error) throw error
-  revalidatePath("/")
-  return { success: true }
-}
-
 // Get system performance metrics
 export async function getDuplicateDetectionMetrics() {
   const { data, error } = await supabaseAdmin
     .from<Feedback>(feedbackTable)
-    .select("status, similarityChecks")
+    .select("status, similarity_checks")
   if (error) throw error
-  const totalChecks = data.reduce((acc, f) => acc + (f.similarityChecks?.length || 0), 0)
+  const totalChecks = data.reduce((acc, f: any) => acc + (f.similarity_checks?.length || 0), 0)
   const duplicatesDetected = data.filter((f) => f.status === "duplicate" || f.status === "merged").length
   const falsePositives = 2
   const falseNegatives = 1
   const averageSimilarityScore = 65
   const detectionAccuracy = 92
   return { totalChecks, duplicatesDetected, falsePositives, falseNegatives, averageSimilarityScore, detectionAccuracy }
+}
+
+// Server action to update feedback status via Supabase RPC
+export async function changeFeedbackStatus(
+  feedbackId: number,
+  newStatus: FeedbackStatus,
+  reason: string = ''
+): Promise<void> {
+  'use server'
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized')
+  }
+  const { error } = await supabaseAdmin.rpc('change_feedback_status', {
+    p_feedback_id: feedbackId,
+    p_new_status: newStatus,
+    p_changed_by: session.user.id,
+    p_reason: reason,
+  })
+  if (error) {
+    throw new Error(error.message)
+  }
+  // Revalidate page to show new status
+  revalidatePath('/')
 }

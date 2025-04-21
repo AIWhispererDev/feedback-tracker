@@ -1,9 +1,8 @@
-"use client"
+"use client";
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
@@ -15,8 +14,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { MoreHorizontal } from "lucide-react"
-import { getFeedbackList, voteFeedback, mergeFeedback, updateFeedbackStatus } from "../actions/feedback"
+import { getFeedbackList, voteFeedback, mergeFeedback, changeFeedbackStatus } from "../actions/feedback"
 import type { Feedback, FeedbackStatus } from "../actions/feedback"
+import { StatusBadge } from "@/components/ui/StatusBadge"
+import { Textarea } from "@/components/ui/textarea"
 
 type SortOption = "recent" | "upvotes"
 type ViewOption = "active" | "all"
@@ -30,6 +31,44 @@ export function FeedbackList() {
     sourceId: number | null
     targetOptions: Feedback[]
   }>({ open: false, sourceId: null, targetOptions: [] })
+  const [statusDialog, setStatusDialog] = useState<{
+    open: boolean
+    feedbackId: number | null
+    newStatus: FeedbackStatus | null
+    reason: string
+  }>({ open: false, feedbackId: null, newStatus: null, reason: "" })
+
+  // Map current status to allowed next statuses
+  const statusTransitions: Record<FeedbackStatus, { label: string; value: FeedbackStatus }[]> = {
+    active: [
+      { label: 'Under Review', value: 'under_review' },
+      { label: 'Archived',    value: 'archived' }
+    ],
+    under_review: [
+      { label: 'Planned',    value: 'planned' },
+      { label: 'Declined',   value: 'declined' }
+    ],
+    planned: [
+      { label: 'In Progress', value: 'in_progress' }
+    ],
+    in_progress: [
+      { label: 'Implemented', value: 'implemented' }
+    ],
+    implemented: [],
+    declined: [],
+    duplicate: [],
+    merged: [],
+    archived: [
+      { label: 'Active', value: 'active' },
+      { label: 'Under Review', value: 'under_review' },
+      { label: 'Planned', value: 'planned' },
+      { label: 'In Progress', value: 'in_progress' },
+      { label: 'Implemented', value: 'implemented' },
+      { label: 'Declined', value: 'declined' },
+      { label: 'Duplicate', value: 'duplicate' },
+      { label: 'Merged', value: 'merged' }
+    ],
+  }
 
   useEffect(() => {
     const fetchList = () => {
@@ -61,7 +100,7 @@ export function FeedbackList() {
   }
 
   async function handleStatusChange(id: number, status: FeedbackStatus) {
-    await updateFeedbackStatus(id, status)
+    await changeFeedbackStatus(id, status)
     const updatedList = await getFeedbackList(viewOption === "all")
     setFeedbackList(sortFeedbackList(updatedList, sortOption))
   }
@@ -77,6 +116,10 @@ export function FeedbackList() {
     })
   }
 
+  function openStatusDialog(id: number, status: FeedbackStatus) {
+    setStatusDialog({ open: true, feedbackId: id, newStatus: status, reason: "" })
+  }
+
   async function handleMerge(targetId: number) {
     if (mergeDialog.sourceId) {
       await mergeFeedback(mergeDialog.sourceId, targetId)
@@ -85,19 +128,6 @@ export function FeedbackList() {
       // Refresh the list
       const updatedList = await getFeedbackList(viewOption === "all")
       setFeedbackList(sortFeedbackList(updatedList, sortOption))
-    }
-  }
-
-  function getStatusBadge(status: FeedbackStatus) {
-    switch (status) {
-      case "active":
-        return <Badge className="bg-green-500">Active</Badge>
-      case "duplicate":
-        return <Badge className="bg-yellow-500">Duplicate</Badge>
-      case "merged":
-        return <Badge className="bg-blue-500">Merged</Badge>
-      case "archived":
-        return <Badge className="bg-gray-500">Archived</Badge>
     }
   }
 
@@ -140,7 +170,7 @@ export function FeedbackList() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
-            className={`border p-4 rounded-md ${feedback.status !== "active" ? "bg-gray-50" : ""}`}
+            className="border p-4 rounded-md bg-background"
           >
             <div className="flex justify-between">
               <div>
@@ -148,7 +178,7 @@ export function FeedbackList() {
                 <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{feedback.category}</span>
               </div>
               <div className="flex items-center gap-2">
-                {getStatusBadge(feedback.status)}
+                <StatusBadge status={feedback.status} />
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -157,18 +187,18 @@ export function FeedbackList() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    {feedback.status === "active" && (
-                      <>
-                        <DropdownMenuItem onClick={() => openMergeDialog(feedback.id)}>
-                          Merge with another
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleStatusChange(feedback.id, "archived")}>
-                          Archive
-                        </DropdownMenuItem>
-                      </>
+                    {feedback.status === 'active' && (
+                      <DropdownMenuItem onClick={() => openMergeDialog(feedback.id)}>
+                        Merge with another
+                      </DropdownMenuItem>
                     )}
-                    {feedback.status !== "active" && (
-                      <DropdownMenuItem onClick={() => handleStatusChange(feedback.id, "active")}>
+                    {statusTransitions[feedback.status]?.map(({ label, value }) => (
+                      <DropdownMenuItem key={value} onClick={() => openStatusDialog(feedback.id, value)}>
+                        {label}
+                      </DropdownMenuItem>
+                    ))}
+                    {!statusTransitions[feedback.status] && feedback.status !== 'active' && (
+                      <DropdownMenuItem onClick={() => openStatusDialog(feedback.id, 'active')}>
                         Mark as active
                       </DropdownMenuItem>
                     )}
@@ -222,7 +252,7 @@ export function FeedbackList() {
             {mergeDialog.targetOptions.map((feedback) => (
               <div
                 key={feedback.id}
-                className="border p-3 rounded-md cursor-pointer hover:bg-gray-50"
+                className="border p-3 rounded-md cursor-pointer bg-background"
                 onClick={() => handleMerge(feedback.id)}
               >
                 <h4 className="font-medium">{feedback.title}</h4>
@@ -241,6 +271,42 @@ export function FeedbackList() {
               onClick={() => setMergeDialog({ open: false, sourceId: null, targetOptions: [] })}
             >
               Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Status Change Dialog */}
+      <Dialog open={statusDialog.open} onOpenChange={(open) => setStatusDialog((prev) => ({ ...prev, open }))}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Status</DialogTitle>
+            <DialogDescription>
+              Provide a reason for changing status to <strong>{statusDialog.newStatus}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            placeholder="Reason (optional)"
+            value={statusDialog.reason}
+            onChange={(e) => setStatusDialog((prev) => ({ ...prev, reason: e.target.value }))}
+            className="w-full mb-4"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStatusDialog({ open: false, feedbackId: null, newStatus: null, reason: "" })}>
+              Cancel
+            </Button>
+            <Button
+              variant="default"
+              onClick={async () => {
+                if (statusDialog.feedbackId && statusDialog.newStatus) {
+                  await changeFeedbackStatus(statusDialog.feedbackId, statusDialog.newStatus, statusDialog.reason)
+                  setStatusDialog({ open: false, feedbackId: null, newStatus: null, reason: "" })
+                  const updatedList = await getFeedbackList(viewOption === "all")
+                  setFeedbackList(sortFeedbackList(updatedList, sortOption))
+                }
+              }}
+            >
+              Confirm
             </Button>
           </DialogFooter>
         </DialogContent>

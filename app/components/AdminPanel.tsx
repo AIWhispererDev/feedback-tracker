@@ -25,7 +25,7 @@ import {
 import {
   getFeedbackList,
   markAsDuplicate,
-  updateFeedbackStatus,
+  changeFeedbackStatus,
   getDuplicateDetectionMetrics,
 } from "../actions/feedback"
 import { getDuplicateConfig, updateDuplicateConfig, resetDuplicateConfig } from "../config/duplicateDetection"
@@ -72,7 +72,7 @@ export function AdminPanel() {
   }
 
   async function handleStatusChange(id: number, status: "active" | "duplicate" | "merged" | "archived") {
-    await updateFeedbackStatus(id, status)
+    await changeFeedbackStatus(id, status)
     // Refresh the list
     const updatedList = await getFeedbackList(true)
     setFeedbackList(updatedList)
