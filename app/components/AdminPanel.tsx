@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,12 +16,13 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
   LineChart,
   Line,
-  Legend,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts"
+import { ChartContainer, ChartTooltip, ChartLegend } from "@/components/ui/chart"
 import {
   getFeedbackList,
   markAsDuplicate,
@@ -116,6 +117,39 @@ export function AdminPanel() {
     { name: "Multi-algorithm", accuracy: 96, speed: 85, falsePositives: 3 },
   ]
 
+  // Derived data for interactive dashboards
+  const feedbackVolumeData = useMemo(() => {
+    const map: Record<string, number> = {}
+    feedbackList.forEach((f) => {
+      const date = new Date(f.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+      map[date] = (map[date] || 0) + 1
+    })
+    return Object.entries(map).map(([date, count]) => ({ date, count }))
+  }, [feedbackList])
+
+  const categoryCountData = useMemo(() => {
+    const counts: Record<string, number> = {}
+    feedbackList.forEach((f) => {
+      counts[f.category] = (counts[f.category] || 0) + 1
+    })
+    return Object.entries(counts).map(([category, count]) => ({ category, count }))
+  }, [feedbackList])
+
+  const sentimentData = useMemo(() => {
+    let pos = 0, neu = 0, neg = 0
+    feedbackList.forEach((f) => {
+      const text = (f.title + " " + f.description).toLowerCase()
+      if (/good|great|love/.test(text)) pos++
+      else if (/bad|terrible|error|hate/.test(text)) neg++
+      else neu++
+    })
+    return [
+      { name: "Positive", value: pos },
+      { name: "Neutral", value: neu },
+      { name: "Negative", value: neg },
+    ]
+  }, [feedbackList])
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -134,6 +168,7 @@ export function AdminPanel() {
               <TabsTrigger value="duplicates">Duplicate Management</TabsTrigger>
               <TabsTrigger value="settings">Detection Settings</TabsTrigger>
               <TabsTrigger value="performance">Performance Metrics</TabsTrigger>
+              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="logs">System Logs</TabsTrigger>
               <TabsTrigger value="users">User Management</TabsTrigger>
             </TabsList>
@@ -376,20 +411,26 @@ export function AdminPanel() {
                     <CardTitle>Performance Over Time</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-80">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={performanceData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          <Line type="monotone" dataKey="accuracy" stroke="#10b981" name="Accuracy %" />
-                          <Line type="monotone" dataKey="falsePositives" stroke="#f59e0b" name="False Positives" />
-                          <Line type="monotone" dataKey="falseNegatives" stroke="#ef4444" name="False Negatives" />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
+                    <ChartContainer
+                      id="performance"
+                      config={{
+                        accuracy: { label: "Accuracy %", color: "#10b981" },
+                        falsePositives: { label: "False Positives", color: "#f59e0b" },
+                        falseNegatives: { label: "False Negatives", color: "#ef4444" },
+                      }}
+                      className="h-80"
+                    >
+                      <LineChart data={performanceData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <ChartTooltip />
+                        <ChartLegend />
+                        <Line type="monotone" dataKey="accuracy" stroke="#10b981" name="Accuracy %" />
+                        <Line type="monotone" dataKey="falsePositives" stroke="#f59e0b" name="False Positives" />
+                        <Line type="monotone" dataKey="falseNegatives" stroke="#ef4444" name="False Negatives" />
+                      </LineChart>
+                    </ChartContainer>
                   </CardContent>
                 </Card>
 
@@ -398,20 +439,109 @@ export function AdminPanel() {
                     <CardTitle>Algorithm Comparison</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-80">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={algorithmComparisonData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          <Bar dataKey="accuracy" fill="#10b981" name="Accuracy %" />
-                          <Bar dataKey="speed" fill="#3b82f6" name="Processing Speed" />
-                          <Bar dataKey="falsePositives" fill="#f59e0b" name="False Positives %" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
+                    <ChartContainer
+                      id="algorithm-comparison"
+                      config={{
+                        accuracy: { label: "Accuracy %", color: "#10b981" },
+                        speed: { label: "Processing Speed", color: "#3b82f6" },
+                        falsePositives: { label: "False Positives %", color: "#f59e0b" },
+                      }}
+                      className="h-80"
+                    >
+                      <BarChart data={algorithmComparisonData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <ChartTooltip />
+                        <ChartLegend />
+                        <Bar dataKey="accuracy" fill="#10b981" name="Accuracy %" />
+                        <Bar dataKey="speed" fill="#3b82f6" name="Processing Speed" />
+                        <Bar dataKey="falsePositives" fill="#f59e0b" name="False Positives %" />
+                      </BarChart>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Interactive Dashboard Charts */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Feedback Volume</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ChartContainer
+                      id="feedback-volume"
+                      config={{ count: { label: "Count", color: "#3b82f6" } }}
+                      className="h-80"
+                    >
+                      <LineChart data={feedbackVolumeData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <ChartTooltip />
+                        <ChartLegend />
+                        <Line type="monotone" dataKey="count" stroke="#3b82f6" />
+                      </LineChart>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Top Categories</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ChartContainer
+                      id="category-count"
+                      config={{ count: { label: "Count", color: "#6366f1" } }}
+                      className="h-80"
+                    >
+                      <BarChart data={categoryCountData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="category" />
+                        <YAxis />
+                        <ChartTooltip />
+                        <ChartLegend />
+                        <Bar dataKey="count" fill="#6366f1" />
+                      </BarChart>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Sentiment Distribution</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ChartContainer
+                      id="sentiment-dist"
+                      config={{
+                        Positive: { label: "Positive", color: "#10b981" },
+                        Neutral: { label: "Neutral", color: "#fcd34d" },
+                        Negative: { label: "Negative", color: "#ef4444" },
+                      }}
+                      className="h-80"
+                    >
+                      <PieChart>
+                        <Pie
+                          data={sentimentData}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          label
+                        >
+                          {sentimentData.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={["#10b981", "#fcd34d", "#ef4444"][index]}
+                            />
+                          ))}
+                        </Pie>
+                        <ChartTooltip />
+                        <ChartLegend />
+                      </PieChart>
+                    </ChartContainer>
                   </CardContent>
                 </Card>
               </div>
@@ -522,6 +652,92 @@ export function AdminPanel() {
             <TabsContent value="users">
               <UserManagement />
             </TabsContent>
+
+            <TabsContent value="dashboard">
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Feedback Volume</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ChartContainer
+                      id="feedback-volume"
+                      config={{ count: { label: "Count", color: "#3b82f6" } }}
+                      className="h-80"
+                    >
+                      <LineChart data={feedbackVolumeData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <ChartTooltip />
+                        <ChartLegend />
+                        <Line type="monotone" dataKey="count" stroke="#3b82f6" />
+                      </LineChart>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Top Categories</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ChartContainer
+                      id="category-count"
+                      config={{ count: { label: "Count", color: "#6366f1" } }}
+                      className="h-80"
+                    >
+                      <BarChart data={categoryCountData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="category" />
+                        <YAxis />
+                        <ChartTooltip />
+                        <ChartLegend />
+                        <Bar dataKey="count" fill="#6366f1" />
+                      </BarChart>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Sentiment Distribution</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ChartContainer
+                      id="sentiment-dist"
+                      config={{
+                        Positive: { label: "Positive", color: "#10b981" },
+                        Neutral: { label: "Neutral", color: "#fcd34d" },
+                        Negative: { label: "Negative", color: "#ef4444" },
+                      }}
+                      className="h-80"
+                    >
+                      <PieChart>
+                        <Pie
+                          data={sentimentData}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          label
+                        >
+                          {sentimentData.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={["#10b981", "#fcd34d", "#ef4444"][index]}
+                            />
+                          ))}
+                        </Pie>
+                        <ChartTooltip />
+                        <ChartLegend />
+                      </PieChart>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
           </Tabs>
         </CardContent>
         <CardFooter>
@@ -534,7 +750,9 @@ export function AdminPanel() {
                   ? "Logs are retained for 30 days"
                   : activeTab === "users"
                     ? "Manage user accounts and permissions"
-                    : "Manage duplicate feedback entries and review potential matches"}
+                    : activeTab === "dashboard"
+                      ? "Interactive dashboard for feedback insights"
+                      : "Manage duplicate feedback entries and review potential matches"}
           </p>
         </CardFooter>
       </Card>
