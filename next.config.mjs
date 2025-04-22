@@ -20,7 +20,7 @@ const nextConfig = {
         source: '/:path*',
         headers: [
           // Restrict sources to self
-          { key: 'Content-Security-Policy', value: "default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';" },
+          { key: 'Content-Security-Policy', value: "default-src 'self'; img-src 'self' data: https://avatars.githubusercontent.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' wss://*.supabase.co https://*.supabase.co;" },
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'no-referrer' },

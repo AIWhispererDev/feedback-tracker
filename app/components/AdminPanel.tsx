@@ -1,7 +1,6 @@
-"use client"
+"use client";
 
 import { useState, useEffect, useMemo } from "react"
-import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
@@ -109,25 +108,8 @@ export function AdminPanel() {
     { name: "Jun", accuracy: 94, falsePositives: 4, falseNegatives: 3 },
   ]
 
-  // Mock data for algorithm comparison
-  const algorithmComparisonData = [
-    { name: "Levenshtein", accuracy: 88, speed: 95, falsePositives: 8 },
-    { name: "Jaccard", accuracy: 91, speed: 92, falsePositives: 6 },
-    { name: "Cosine", accuracy: 93, speed: 88, falsePositives: 5 },
-    { name: "Multi-algorithm", accuracy: 96, speed: 85, falsePositives: 3 },
-  ]
-
-  // Derived data for interactive dashboards
-  const feedbackVolumeData = useMemo(() => {
-    const map: Record<string, number> = {}
-    feedbackList.forEach((f) => {
-      const date = new Date(f.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
-      map[date] = (map[date] || 0) + 1
-    })
-    return Object.entries(map).map(([date, count]) => ({ date, count }))
-  }, [feedbackList])
-
-  const categoryCountData = useMemo(() => {
+  // Category distribution data
+  const categoryData = useMemo(() => {
     const counts: Record<string, number> = {}
     feedbackList.forEach((f) => {
       counts[f.category] = (counts[f.category] || 0) + 1
@@ -151,12 +133,7 @@ export function AdminPanel() {
   }, [feedbackList])
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Feedback Administration</CardTitle>
@@ -164,7 +141,8 @@ export function AdminPanel() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-4">
+            <TabsList className="mb-4 overflow-x-auto whitespace-nowrap flex gap-2 scrollbar-hide sm:gap-4 rounded-lg border border-border bg-muted/60 dark:bg-muted/30 p-1">
+
               <TabsTrigger value="duplicates">Duplicate Management</TabsTrigger>
               <TabsTrigger value="settings">Detection Settings</TabsTrigger>
               <TabsTrigger value="performance">Performance Metrics</TabsTrigger>
@@ -175,260 +153,252 @@ export function AdminPanel() {
 
             <TabsContent value="duplicates">
               <div className="space-y-4">
-                <div>
+                <div className="sm:flex sm:items-center sm:justify-between">
                   <Input
                     placeholder="Search feedback..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="mb-4"
+                    className="mb-4 sm:mb-0 sm:w-80"
                   />
                 </div>
-
-                <h3 className="text-lg font-medium">Potential Duplicate Groups</h3>
-                {duplicateGroups.length === 0 ? (
-                  <p className="text-gray-500">No potential duplicates found with current settings.</p>
-                ) : (
-                  duplicateGroups.map((group, groupIndex) => (
-                    <Card
-                      key={groupIndex}
-                      className="mb-4 border border-border bg-card/90 dark:bg-card/80 shadow-sm hover:bg-accent/40 dark:hover:bg-accent/10 transition-colors"
-                    >
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-base font-semibold text-primary">
-                          Potential Duplicate Group #{groupIndex + 1}
-                        </CardTitle>
-                        <CardDescription>
-                          {group.map((item) => (
-                            <span key={item.id} className="inline-block mr-2 text-xs text-muted-foreground">
-                              #{item.id}
-                            </span>
-                          ))}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        {group.map((item) => (
-                          <div
-                            key={item.id}
-                            className="border border-border bg-muted/80 dark:bg-muted/40 rounded-lg p-3 flex flex-col gap-1 shadow-sm hover:bg-accent/60 dark:hover:bg-accent/30 transition-colors"
-                          >
-                            <span className="font-medium text-sm text-foreground">{item.title}</span>
-                            <span className="text-xs text-muted-foreground">{item.description}</span>
-                            <span className="text-xs text-accent-foreground">Status: {item.status}</span>
-                          </div>
-                        ))}
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
+                <div className="space-y-4">
+                  <div>
+                    <Input
+                      placeholder="Search feedback..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="mb-4"
+                    />
+                  </div>
+                  {duplicateGroups.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No potential duplicates found
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {duplicateGroups.map((group, groupIndex) => (
+                        <Card key={groupIndex}>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-lg">Potential Duplicate Group #{groupIndex + 1}</CardTitle>
+                            <CardDescription>
+                              {group.length} similar feedback items
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-4">
+                              {group.map((item) => (
+                                <div
+                                  key={item.id}
+                                  className="p-4 border rounded-lg bg-background"
+                                >
+                                  <div className="flex justify-between items-start mb-2">
+                                    <div>
+                                      <h3 className="font-medium">{item.title}</h3>
+                                      <p className="text-sm text-muted-foreground">
+                                        {new Date(item.created_at).toLocaleDateString()} - {item.category}
+                                      </p>
+                                    </div>
+                                    <div className="flex space-x-2">
+                                      <Select
+                                        value={item.status}
+                                        onValueChange={(value) =>
+                                          handleStatusChange(
+                                            item.id,
+                                            value as "active" | "duplicate" | "merged" | "archived"
+                                          )
+                                        }
+                                      >
+                                        <SelectTrigger className="w-[130px]">
+                                          <SelectValue placeholder="Status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="active">Active</SelectItem>
+                                          <SelectItem value="duplicate">Duplicate</SelectItem>
+                                          <SelectItem value="merged">Merged</SelectItem>
+                                          <SelectItem value="archived">Archived</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  </div>
+                                  <p className="text-sm mb-4">{item.description}</p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {group
+                                      .filter((other) => other.id !== item.id)
+                                      .map((other) => (
+                                        <Button
+                                          key={other.id}
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => handleMarkAsDuplicate(item.id, other.id)}
+                                          className="text-xs"
+                                        >
+                                          Mark as duplicate of #{other.id}
+                                        </Button>
+                                      ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </TabsContent>
 
             <TabsContent value="settings">
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Similarity Detection</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <Label htmlFor="similarity-threshold">
-                            Similarity Threshold: {duplicateConfig.similarityThreshold}%
-                          </Label>
-                        </div>
-                        <Slider
-                          id="similarity-threshold"
-                          min={50}
-                          max={95}
-                          step={5}
-                          value={[duplicateConfig.similarityThreshold]}
-                          onValueChange={(value) => handleConfigChange("similarityThreshold", value[0])}
-                        />
-                        <p className="text-xs text-gray-500">
-                          Higher values require more similarity to flag as duplicates
-                        </p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Detection Algorithm</Label>
-                        <Select value={selectedAlgorithm} onValueChange={handleAlgorithmChange}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select algorithm" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="levenshtein">Levenshtein Distance</SelectItem>
-                            <SelectItem value="jaccard">Jaccard Similarity</SelectItem>
-                            <SelectItem value="cosine">Cosine Similarity</SelectItem>
-                            <SelectItem value="multi">Multi-algorithm</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <p className="text-xs text-gray-500">
-                          {selectedAlgorithm === "levenshtein" && "Best for short text and typo detection"}
-                          {selectedAlgorithm === "jaccard" && "Best for comparing sets of words, ignores word order"}
-                          {selectedAlgorithm === "cosine" && "Best for longer text, considers word frequency"}
-                          {selectedAlgorithm === "multi" && "Combines multiple algorithms for best accuracy"}
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="title-weight">Title Weight: {duplicateConfig.titleWeight * 100}%</Label>
-                          <Slider
-                            id="title-weight"
-                            min={0}
-                            max={1}
-                            step={0.1}
-                            value={[duplicateConfig.titleWeight]}
-                            onValueChange={(value) => handleConfigChange("titleWeight", value[0])}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="desc-weight">
-                            Description Weight: {duplicateConfig.descriptionWeight * 100}%
-                          </Label>
-                          <Slider
-                            id="desc-weight"
-                            min={0}
-                            max={1}
-                            step={0.1}
-                            value={[duplicateConfig.descriptionWeight]}
-                            onValueChange={(value) => handleConfigChange("descriptionWeight", value[0])}
-                          />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Additional Detection Criteria</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <Label htmlFor="time-threshold">
-                            Time Threshold: {duplicateConfig.timeThreshold / (60 * 60 * 1000)} hours
-                          </Label>
-                        </div>
-                        <Slider
-                          id="time-threshold"
-                          min={1}
-                          max={72}
-                          step={1}
-                          value={[duplicateConfig.timeThreshold / (60 * 60 * 1000)]}
-                          onValueChange={(value) => handleConfigChange("timeThreshold", value[0] * 60 * 60 * 1000)}
-                        />
-                        <p className="text-xs text-gray-500">
-                          Time window to consider for duplicate detection from same submitter
-                        </p>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="check-ip"
-                          checked={duplicateConfig.checkIpAddress}
-                          onCheckedChange={(checked) => handleConfigChange("checkIpAddress", checked)}
-                        />
-                        <Label htmlFor="check-ip">Consider IP address for duplicate detection</Label>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="ip-weight">IP Match Weight: {duplicateConfig.ipMatchWeight * 100}%</Label>
-                        <Slider
-                          id="ip-weight"
-                          min={0}
-                          max={1}
-                          step={0.1}
-                          value={[duplicateConfig.ipMatchWeight]}
-                          onValueChange={(value) => handleConfigChange("ipMatchWeight", value[0])}
-                          disabled={!duplicateConfig.checkIpAddress}
-                        />
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="adaptive-thresholds"
-                          checked={duplicateConfig.enableAdaptiveThresholds}
-                          onCheckedChange={(checked) => handleConfigChange("enableAdaptiveThresholds", checked)}
-                        />
-                        <Label htmlFor="adaptive-thresholds">Enable adaptive thresholds</Label>
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        Automatically adjust thresholds based on system performance
+              <Card>
+                <CardHeader>
+                  <CardTitle>Duplicate Detection Settings</CardTitle>
+                  <CardDescription>Configure how duplicate feedback is detected</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="algorithm">Detection Algorithm</Label>
+                      <Select
+                        value={selectedAlgorithm}
+                        onValueChange={(value) =>
+                          handleAlgorithmChange(value as "levenshtein" | "jaccard" | "cosine" | "multi")
+                        }
+                      >
+                        <SelectTrigger id="algorithm" className="w-full">
+                          <SelectValue placeholder="Select algorithm" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="levenshtein">Levenshtein Distance</SelectItem>
+                          <SelectItem value="jaccard">Jaccard Similarity</SelectItem>
+                          <SelectItem value="cosine">Cosine Similarity</SelectItem>
+                          <SelectItem value="multi">Multi-algorithm</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {selectedAlgorithm === "levenshtein"
+                          ? "Compares edit distance between text strings"
+                          : selectedAlgorithm === "jaccard"
+                            ? "Measures similarity between sets"
+                            : selectedAlgorithm === "cosine"
+                              ? "Measures cosine of angle between vectors"
+                              : "Uses multiple algorithms with weighted scoring"}
                       </p>
-                    </CardContent>
-                  </Card>
-                </div>
+                    </div>
 
-                <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={handleResetConfig}>
-                    Reset to Defaults
-                  </Button>
-                  <Button>Save Configuration</Button>
-                </div>
-              </div>
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <Label htmlFor="threshold">Similarity Threshold ({duplicateConfig.threshold}%)</Label>
+                      </div>
+                      <Slider
+                        id="threshold"
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={[duplicateConfig.threshold]}
+                        onValueChange={(value) => handleConfigChange("threshold", value[0])}
+                        className="w-full"
+                      />
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Higher values require more similarity to be considered duplicates
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="title-weight">Title Weight ({duplicateConfig.titleWeight})</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Importance of title in similarity calculation
+                        </p>
+                      </div>
+                      <Slider
+                        id="title-weight"
+                        min={0}
+                        max={10}
+                        step={0.1}
+                        value={[duplicateConfig.titleWeight]}
+                        onValueChange={(value) => handleConfigChange("titleWeight", value[0])}
+                        className="w-[200px]"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="desc-weight">Description Weight ({duplicateConfig.descriptionWeight})</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Importance of description in similarity calculation
+                        </p>
+                      </div>
+                      <Slider
+                        id="desc-weight"
+                        min={0}
+                        max={10}
+                        step={0.1}
+                        value={[duplicateConfig.descriptionWeight]}
+                        onValueChange={(value) => handleConfigChange("descriptionWeight", value[0])}
+                        className="w-[200px]"
+                      />
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="auto-merge"
+                        checked={duplicateConfig.autoMergeSimilar}
+                        onCheckedChange={(checked) => handleConfigChange("autoMergeSimilar", checked)}
+                      />
+                      <Label htmlFor="auto-merge">Automatically merge very similar feedback</Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="use-ml"
+                        checked={duplicateConfig.useMLModel}
+                        onCheckedChange={(checked) => handleConfigChange("useMLModel", checked)}
+                      />
+                      <Label htmlFor="use-ml">Use machine learning model for detection</Label>
+                    </div>
+
+                    <Button onClick={handleResetConfig} variant="outline">
+                      Reset to Defaults
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="performance">
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg">Detection Accuracy</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold text-center text-green-600">
-                        {metrics?.detectionAccuracy || 92}%
-                      </div>
-                      <p className="text-sm text-gray-500 text-center">Overall accuracy</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg">False Positives</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold text-center text-amber-600">
-                        {metrics?.falsePositives || 2}
-                      </div>
-                      <p className="text-sm text-gray-500 text-center">Incorrectly flagged as duplicates</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg">False Negatives</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold text-center text-red-600">{metrics?.falseNegatives || 1}</div>
-                      <p className="text-sm text-gray-500 text-center">Missed duplicates</p>
-                    </CardContent>
-                  </Card>
-                </div>
-
+              <div className="grid gap-4 md:grid-cols-2">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Performance Over Time</CardTitle>
+                    <CardTitle>Detection Accuracy</CardTitle>
+                    <CardDescription>Performance metrics over time</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ChartContainer
-                      id="performance"
+                      id="accuracy-chart"
                       config={{
-                        accuracy: { label: "Accuracy %", color: "#10b981" },
-                        falsePositives: { label: "False Positives", color: "#f59e0b" },
-                        falseNegatives: { label: "False Negatives", color: "#ef4444" },
+                        accuracy: { label: "Accuracy %", color: "#3b82f6" },
+                        falsePositives: { label: "False Positives", color: "#ef4444" },
+                        falseNegatives: { label: "False Negatives", color: "#f97316" },
                       }}
                       className="h-80"
                     >
-                      <LineChart data={performanceData}>
+                      <LineChart
+                        data={performanceData}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
                         <YAxis />
                         <ChartTooltip />
                         <ChartLegend />
-                        <Line type="monotone" dataKey="accuracy" stroke="#10b981" name="Accuracy %" />
-                        <Line type="monotone" dataKey="falsePositives" stroke="#f59e0b" name="False Positives" />
-                        <Line type="monotone" dataKey="falseNegatives" stroke="#ef4444" name="False Negatives" />
+                        <Line
+                          type="monotone"
+                          dataKey="accuracy"
+                          stroke="#3b82f6"
+                          activeDot={{ r: 8 }}
+                        />
+                        <Line type="monotone" dataKey="falsePositives" stroke="#ef4444" />
+                        <Line type="monotone" dataKey="falseNegatives" stroke="#f97316" />
                       </LineChart>
                     </ChartContainer>
                   </CardContent>
@@ -437,110 +407,37 @@ export function AdminPanel() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Algorithm Comparison</CardTitle>
+                    <CardDescription>Performance by algorithm type</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ChartContainer
                       id="algorithm-comparison"
                       config={{
-                        accuracy: { label: "Accuracy %", color: "#10b981" },
-                        speed: { label: "Processing Speed", color: "#3b82f6" },
-                        falsePositives: { label: "False Positives %", color: "#f59e0b" },
+                        levenshtein: { label: "Levenshtein", color: "#3b82f6" },
+                        jaccard: { label: "Jaccard", color: "#8b5cf6" },
+                        cosine: { label: "Cosine", color: "#ec4899" },
+                        multi: { label: "Multi-algorithm", color: "#10b981" },
                       }}
                       className="h-80"
                     >
-                      <BarChart data={algorithmComparisonData}>
+                      <BarChart
+                        data={[
+                          { name: "Accuracy", levenshtein: 88, jaccard: 85, cosine: 90, multi: 94 },
+                          { name: "Speed (ms)", levenshtein: 120, jaccard: 150, cosine: 200, multi: 250 },
+                          { name: "False Positives", levenshtein: 12, jaccard: 15, cosine: 8, multi: 5 },
+                        ]}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
                         <YAxis />
                         <ChartTooltip />
                         <ChartLegend />
-                        <Bar dataKey="accuracy" fill="#10b981" name="Accuracy %" />
-                        <Bar dataKey="speed" fill="#3b82f6" name="Processing Speed" />
-                        <Bar dataKey="falsePositives" fill="#f59e0b" name="False Positives %" />
+                        <Bar dataKey="levenshtein" fill="#3b82f6" />
+                        <Bar dataKey="jaccard" fill="#8b5cf6" />
+                        <Bar dataKey="cosine" fill="#ec4899" />
+                        <Bar dataKey="multi" fill="#10b981" />
                       </BarChart>
-                    </ChartContainer>
-                  </CardContent>
-                </Card>
-
-                {/* Interactive Dashboard Charts */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Feedback Volume</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ChartContainer
-                      id="feedback-volume"
-                      config={{ count: { label: "Count", color: "#3b82f6" } }}
-                      className="h-80"
-                    >
-                      <LineChart data={feedbackVolumeData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <ChartTooltip />
-                        <ChartLegend />
-                        <Line type="monotone" dataKey="count" stroke="#3b82f6" />
-                      </LineChart>
-                    </ChartContainer>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Top Categories</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ChartContainer
-                      id="category-count"
-                      config={{ count: { label: "Count", color: "#6366f1" } }}
-                      className="h-80"
-                    >
-                      <BarChart data={categoryCountData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="category" />
-                        <YAxis />
-                        <ChartTooltip />
-                        <ChartLegend />
-                        <Bar dataKey="count" fill="#6366f1" />
-                      </BarChart>
-                    </ChartContainer>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Sentiment Distribution</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ChartContainer
-                      id="sentiment-dist"
-                      config={{
-                        Positive: { label: "Positive", color: "#10b981" },
-                        Neutral: { label: "Neutral", color: "#fcd34d" },
-                        Negative: { label: "Negative", color: "#ef4444" },
-                      }}
-                      className="h-80"
-                    >
-                      <PieChart>
-                        <Pie
-                          data={sentimentData}
-                          dataKey="value"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={80}
-                          label
-                        >
-                          {sentimentData.map((entry, index) => (
-                            <Cell
-                              key={`cell-${index}`}
-                              fill={["#10b981", "#fcd34d", "#ef4444"][index]}
-                            />
-                          ))}
-                        </Pie>
-                        <ChartTooltip />
-                        <ChartLegend />
-                      </PieChart>
                     </ChartContainer>
                   </CardContent>
                 </Card>
@@ -548,105 +445,39 @@ export function AdminPanel() {
             </TabsContent>
 
             <TabsContent value="logs">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium">System Logs</h3>
-                  <div className="flex gap-2">
-                    <Select defaultValue="all">
-                      <SelectTrigger className="w-[150px]">
-                        <SelectValue placeholder="Log type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All logs</SelectItem>
-                        <SelectItem value="duplicates">Duplicates only</SelectItem>
-                        <SelectItem value="non-duplicates">Non-duplicates</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button variant="outline" size="sm">
-                      Export Logs
-                    </Button>
+              <Card>
+                <CardHeader>
+                  <CardTitle>System Logs</CardTitle>
+                  <CardDescription>Recent duplicate detection system activity</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {metrics?.logs?.map((log: any, i: number) => (
+                      <div
+                        key={i}
+                        className={`p-4 border rounded-lg ${
+                          selectedLog === i ? "border-primary" : "border-border"
+                        } cursor-pointer`}
+                        onClick={() => setSelectedLog(selectedLog === i ? null : i)}
+                      >
+                        <div className="flex justify-between">
+                          <div className="font-medium">{log.event}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {new Date(log.timestamp).toLocaleString()}
+                          </div>
+                        </div>
+                        {selectedLog === i && (
+                          <div className="mt-2 text-sm">
+                            <pre className="bg-muted p-2 rounded overflow-x-auto">
+                              {JSON.stringify(log.details, null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                </div>
-
-                <Card className="h-full border border-border bg-card/95 dark:bg-card/80 shadow-md">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-primary">System Logs</CardTitle>
-                    <CardDescription className="text-muted-foreground">Review system activity and duplicate detection logs.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="overflow-y-auto max-h-[400px] pr-2">
-                      <ul className="divide-y divide-border">
-                        {feedbackList.map((log) => (
-                          <li
-                            key={log.id}
-                            className={`py-3 px-2 cursor-pointer rounded-lg transition-colors border border-transparent ${selectedLog === log.id ? "bg-accent/50 dark:bg-accent/20 border-ring border" : "hover:bg-muted/70 dark:hover:bg-muted/40"}`}
-                            onClick={() => setSelectedLog(log.id)}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-medium text-foreground">Feedback #{log.id}</span>
-                              <span className="text-xs text-accent-foreground">{log.status}</span>
-                            </div>
-                            <div className="text-xs text-muted-foreground truncate max-w-xs">
-                              {log.title}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="pl-2">
-                      <Card className="h-full bg-popover/95 dark:bg-popover/60 border border-border shadow-sm">
-                        <CardHeader>
-                          <CardTitle className="text-base text-primary">Log Details</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                          {selectedLog ? (
-                            <div className="space-y-2">
-                              <div>
-                                <h4 className="text-sm font-medium text-muted-foreground">Title</h4>
-                                <p className="font-medium text-foreground">
-                                  {feedbackList.find((f) => f.id === selectedLog)?.title}
-                                </p>
-                              </div>
-                              <div>
-                                <h4 className="text-sm font-medium text-muted-foreground">Description</h4>
-                                <p className="text-muted-foreground">
-                                  {feedbackList.find((f) => f.id === selectedLog)?.description}
-                                </p>
-                              </div>
-                              <div>
-                                <h4 className="text-sm font-medium text-muted-foreground">Status</h4>
-                                <p className="text-accent-foreground">
-                                  {feedbackList.find((f) => f.id === selectedLog)?.status}
-                                </p>
-                              </div>
-                              <div>
-                                <h4 className="text-sm font-medium text-muted-foreground">Decision</h4>
-                                <p className="mt-1">
-                                  {feedbackList.find((f) => f.id === selectedLog)?.status === "duplicate" ||
-                                  feedbackList.find((f) => f.id === selectedLog)?.status === "merged"
-                                    ? "Marked as duplicate due to high content similarity and matching submission patterns."
-                                    : "Not identified as a duplicate based on current similarity thresholds."}
-                                </p>
-                              </div>
-
-                              {feedbackList.find((f) => f.id === selectedLog)?.duplicateOf && (
-                                <div>
-                                  <h4 className="text-sm font-medium text-muted-foreground">Duplicate Of</h4>
-                                  <p className="mt-1">
-                                    Feedback #{feedbackList.find((f) => f.id === selectedLog)?.duplicateOf}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-muted-foreground">Select a log entry to view detailed information</p>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="users">
@@ -654,46 +485,26 @@ export function AdminPanel() {
             </TabsContent>
 
             <TabsContent value="dashboard">
-              <div className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Feedback Volume</CardTitle>
+                    <CardTitle>Feedback by Category</CardTitle>
+                    <CardDescription>Distribution of feedback across categories</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ChartContainer
-                      id="feedback-volume"
-                      config={{ count: { label: "Count", color: "#3b82f6" } }}
+                      id="category-dist"
                       className="h-80"
                     >
-                      <LineChart data={feedbackVolumeData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <ChartTooltip />
-                        <ChartLegend />
-                        <Line type="monotone" dataKey="count" stroke="#3b82f6" />
-                      </LineChart>
-                    </ChartContainer>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Top Categories</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ChartContainer
-                      id="category-count"
-                      config={{ count: { label: "Count", color: "#6366f1" } }}
-                      className="h-80"
-                    >
-                      <BarChart data={categoryCountData}>
+                      <BarChart
+                        data={categoryData}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="category" />
                         <YAxis />
                         <ChartTooltip />
-                        <ChartLegend />
-                        <Bar dataKey="count" fill="#6366f1" />
+                        <Bar dataKey="count" fill="#3b82f6" />
                       </BarChart>
                     </ChartContainer>
                   </CardContent>
@@ -701,7 +512,8 @@ export function AdminPanel() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Sentiment Distribution</CardTitle>
+                    <CardTitle>Sentiment Analysis</CardTitle>
+                    <CardDescription>Feedback sentiment distribution</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ChartContainer
@@ -756,7 +568,7 @@ export function AdminPanel() {
           </p>
         </CardFooter>
       </Card>
-    </motion.div>
+    </div>
   )
 }
 
