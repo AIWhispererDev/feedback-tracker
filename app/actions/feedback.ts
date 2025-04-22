@@ -437,24 +437,85 @@ export async function getUserFeedback(userId: string) {
   return data
 }
 
+/**
+ * NOTE: Requires a persistent table in Supabase:
+ * CREATE TABLE feedback_votes (
+ *   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+ *   feedback_id integer REFERENCES feedback(id) ON DELETE CASCADE,
+ *   user_id uuid REFERENCES users(id) ON DELETE CASCADE,
+ *   vote_type text CHECK (vote_type IN ('upvote', 'downvote')),
+ *   created_at timestamptz DEFAULT now(),
+ *   UNIQUE(feedback_id, user_id)
+ * );
+ */
 export async function voteFeedback(id: number, voteType: "upvote" | "downvote") {
   // Get current user session
   const session = await getServerSession(authOptions)
+  if (!session?.user?.id) throw new Error("You must be logged in to vote.")
+  const userId = session.user.id
 
+  // Check if user already voted for this feedback
+  const { data: existingVote, error: voteFetchError } = await supabaseAdmin
+    .from("feedback_votes")
+    .select("id, vote_type")
+    .eq("feedback_id", id)
+    .eq("user_id", userId)
+    .single()
+  if (voteFetchError && voteFetchError.code !== "PGRST116") throw voteFetchError
+
+  // Fetch current feedback counts
   const { data: feedback, error: fetchError } = await supabaseAdmin
     .from<Feedback>(feedbackTable)
     .select("upvotes, downvotes")
     .eq("id", id)
     .single()
   if (fetchError) throw fetchError
-  const newCount = voteType === "upvote" ? feedback.upvotes + 1 : feedback.downvotes + 1
-  const { error: voteError } = await supabaseAdmin
+
+  let upvotes = feedback.upvotes
+  let downvotes = feedback.downvotes
+
+  if (!existingVote) {
+    // No vote yet, insert new vote
+    const { error: insertError } = await supabaseAdmin
+      .from("feedback_votes")
+      .insert({ feedback_id: id, user_id: userId, vote_type: voteType })
+    if (insertError) throw insertError
+    if (voteType === "upvote") upvotes++
+    else downvotes++
+  } else if (existingVote.vote_type === voteType) {
+    // Clicking same vote again removes vote
+    const { error: deleteError } = await supabaseAdmin
+      .from("feedback_votes")
+      .delete()
+      .eq("id", existingVote.id)
+    if (deleteError) throw deleteError
+    if (voteType === "upvote") upvotes--
+    else downvotes--
+  } else {
+    // Switching vote
+    const { error: updateError } = await supabaseAdmin
+      .from("feedback_votes")
+      .update({ vote_type: voteType })
+      .eq("id", existingVote.id)
+    if (updateError) throw updateError
+    if (voteType === "upvote") {
+      upvotes++
+      downvotes--
+    } else {
+      upvotes--
+      downvotes++
+    }
+  }
+
+  // Update feedback counts
+  const { error: updateError } = await supabaseAdmin
     .from<Feedback>(feedbackTable)
-    .update(voteType === "upvote" ? { upvotes: newCount } : { downvotes: newCount })
+    .update({ upvotes, downvotes })
     .eq("id", id)
-  if (voteError) throw voteError
+  if (updateError) throw updateError
   revalidatePath("/")
 }
+
 
 export async function markAsDuplicate(id: number, originalId: number, logId?: string) {
   console.log(`[SERVER] markAsDuplicate called with id=${id}, originalId=${originalId}`);

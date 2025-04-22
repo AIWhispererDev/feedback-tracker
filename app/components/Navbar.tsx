@@ -34,7 +34,7 @@ export function Navbar() {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link href="/" className="text-xl font-bold text-foreground">
-                Feedback System
+                Parthenon V2 Feedback
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
