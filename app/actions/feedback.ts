@@ -8,6 +8,9 @@ import { isFeedbackSimilar, shareKeyTerms, containsSubstring } from "../utils/si
 import { logDuplicateCheck, logUserAction } from "../utils/logging"
 import { getCategoryConfig } from "../config/duplicateDetection"
 import supabaseAdmin from "@/app/lib/supabaseClient"
+import { feedbackSchema, rateLimitMap } from './feedbackHelpers';
+import sanitizeHtml from 'sanitize-html';
+
 const feedbackTable = "feedback"
 
 export type FeedbackStatus =
@@ -308,11 +311,41 @@ export async function submitFeedback(formData: FormData, ip?: string, userAgent?
     return { error: "Unauthorized" }
   }
 
-  const title = formData.get("title") as string
-  const description = formData.get("description") as string
-  const category = (formData.get("category") as FeedbackCategory) || "general"
-  const forceDuplicate = formData.get("forceDuplicate") === "true"
-  const logIds = (formData.get("logIds") as string) || ""
+  let title = formData.get("title") as string;
+  let description = formData.get("description") as string;
+  let category = (formData.get("category") as FeedbackCategory) || "general";
+  const forceDuplicate = formData.get("forceDuplicate") === "true";
+  const logIds = (formData.get("logIds") as string) || "";
+
+  // Rate limiting: max 5 requests per IP per minute
+  const now = Date.now();
+  const clientIp = ip ?? 'unknown';
+  const record = rateLimitMap.get(clientIp);
+  if (!record || now - record.firstTimestamp > 60000) {
+    rateLimitMap.set(clientIp, { count: 1, firstTimestamp: now });
+  } else {
+    record.count++;
+    if (record.count > 5) {
+      return { error: 'Rate limit exceeded. Try again later.' };
+    }
+  }
+
+  // Validate input
+  const parseResult = feedbackSchema.safeParse({ title, description, category });
+  if (!parseResult.success) {
+    const messages = parseResult.error.errors.map(e => e.message).join(', ');
+    return { error: `Invalid input: ${messages}` };
+  }
+  const { title: validTitle, description: validDescription, category: validCategory } = parseResult.data;
+
+  // Sanitize input
+  const cleanTitle = sanitizeHtml(validTitle, { allowedTags: [], allowedAttributes: {} });
+  const cleanDescription = sanitizeHtml(validDescription, { allowedTags: [], allowedAttributes: {} });
+
+  // Override with sanitized values
+  title = cleanTitle;
+  description = cleanDescription;
+  category = validCategory;
 
   if (!title || !description) {
     return { error: "Title and description are required" }

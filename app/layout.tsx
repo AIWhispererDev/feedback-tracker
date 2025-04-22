@@ -20,11 +20,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    /*
-      Do not set className or style on <html> in App Router layout.tsx.
-      ThemeProvider will apply the theme class to <body> only, which avoids hydration mismatches.
-    */
     <html lang="en" suppressHydrationWarning>
+      {/*
+        Do not set className or style on <html> in App Router layout.tsx.
+        ThemeProvider will apply the theme class to <body> only, which avoids hydration mismatches.
+      */}
       <body className={inter.className}>
         <AuthProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>

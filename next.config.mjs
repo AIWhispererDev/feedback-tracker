@@ -9,6 +9,29 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Security headers & CORS settings
+  async headers() {
+    // Only enforce CSP in production
+    if (process.env.NODE_ENV !== 'production') {
+      return [];
+    }
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          // Restrict sources to self
+          { key: 'Content-Security-Policy', value: "default-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self';" },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          // CORS
+          { key: 'Access-Control-Allow-Origin', value: process.env.NEXT_PUBLIC_ALLOWED_ORIGIN || 'http://localhost:3000' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
+        ],
+      },
+    ];
+  },
 }
 
 export default nextConfig
