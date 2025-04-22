@@ -7,7 +7,7 @@ import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+// Removed tabs import as we're using custom tabs
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   BarChart,
@@ -20,8 +20,11 @@ import {
   PieChart,
   Pie,
   Cell,
+  ResponsiveContainer,
+  Tooltip,
+  Legend
 } from "recharts"
-import { ChartContainer, ChartTooltip, ChartLegend } from "@/components/ui/chart"
+// Removed chart components import as we're using direct Recharts components
 import {
   getFeedbackList,
   markAsDuplicate,
@@ -41,6 +44,8 @@ export function AdminPanel() {
   const [activeTab, setActiveTab] = useState("duplicates")
   const [selectedAlgorithm, setSelectedAlgorithm] = useState(duplicateConfig.algorithm)
   const [selectedLog, setSelectedLog] = useState<number | null>(null)
+  const [debugMode, setDebugMode] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
     getFeedbackList(true).then((list) => {
@@ -65,10 +70,48 @@ export function AdminPanel() {
   }, [searchTerm, feedbackList])
 
   async function handleMarkAsDuplicate(id: number, originalId: number) {
-    await markAsDuplicate(id, originalId)
-    // Refresh the list
-    const updatedList = await getFeedbackList(true)
-    setFeedbackList(updatedList)
+    try {
+      // Clear any previous error message
+      setErrorMessage(null);
+      
+      // Ensure IDs are valid numbers
+      const numericId = Number(id);
+      const numericOriginalId = Number(originalId);
+      
+      if (isNaN(numericId) || isNaN(numericOriginalId)) {
+        const errorMsg = `Invalid ID format: id=${id}, originalId=${originalId}`;
+        console.error(errorMsg);
+        setErrorMessage(errorMsg);
+        return;
+      }
+      
+      // Make sure we're not marking an item as a duplicate of itself
+      if (numericId === numericOriginalId) {
+        const errorMsg = "Cannot mark an item as a duplicate of itself";
+        console.error(errorMsg);
+        setErrorMessage(errorMsg);
+        return;
+      }
+      
+      console.log(`Marking feedback #${numericId} as duplicate of #${numericOriginalId}`);
+      await markAsDuplicate(numericId, numericOriginalId);
+      
+      // Refresh the list
+      const updatedList = await getFeedbackList(true);
+      setFeedbackList(updatedList);
+    } catch (error: any) {
+      console.error("Error marking as duplicate:", error);
+      
+      // Extract and display the error message
+      let errorMsg = "Unknown error occurred";
+      if (error.message) {
+        errorMsg = error.message;
+      } else if (typeof error === 'string') {
+        errorMsg = error;
+      }
+      
+      setErrorMessage(errorMsg);
+    }
   }
 
   async function handleStatusChange(id: number, status: "active" | "duplicate" | "merged" | "archived") {
@@ -112,9 +155,11 @@ export function AdminPanel() {
   const categoryData = useMemo(() => {
     const counts: Record<string, number> = {}
     feedbackList.forEach((f) => {
-      counts[f.category] = (counts[f.category] || 0) + 1
+      if (f.category) { // Check if category exists
+        counts[f.category] = (counts[f.category] || 0) + 1
+      }
     })
-    return Object.entries(counts).map(([category, count]) => ({ category, count }))
+    return Object.entries(counts || {}).map(([category, count]) => ({ category, count }))
   }, [feedbackList])
 
   const sentimentData = useMemo(() => {
@@ -134,40 +179,113 @@ export function AdminPanel() {
 
   return (
     <div className="space-y-6">
+      {/* Debug Error Display */}
+      {errorMessage && (
+        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded relative mb-4">
+          <strong className="font-bold">Error: </strong>
+          <span className="block sm:inline">{errorMessage}</span>
+        </div>
+      )}
+      
       <Card>
         <CardHeader>
-          <CardTitle>Feedback Administration</CardTitle>
-          <CardDescription>Manage feedback submissions and duplicate detection settings</CardDescription>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>Feedback Administration</CardTitle>
+              <CardDescription>Manage feedback submissions and duplicate detection settings</CardDescription>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="debug-mode"
+                checked={debugMode}
+                onCheckedChange={setDebugMode}
+              />
+              <Label htmlFor="debug-mode">Debug Mode</Label>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-4 overflow-x-auto whitespace-nowrap flex gap-2 scrollbar-hide sm:gap-4 rounded-lg border border-border bg-muted/60 dark:bg-muted/30 p-1">
+          {/* Tab navigation with dropdown for mobile and tabs for desktop */}
+          <div className="mb-6">
+            {/* Mobile dropdown navigation */}
+            <div className="md:hidden mb-4">
+              <Select value={activeTab} onValueChange={setActiveTab}>
+                <SelectTrigger className="w-full">
+                  <SelectValue>
+                    {activeTab === "duplicates" && "Duplicate Management"}
+                    {activeTab === "settings" && "Detection Settings"}
+                    {activeTab === "performance" && "Performance Metrics"}
+                    {activeTab === "dashboard" && "Dashboard"}
+                    {activeTab === "logs" && "System Logs"}
+                    {activeTab === "users" && "User Management"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="duplicates">Duplicate Management</SelectItem>
+                  <SelectItem value="settings">Detection Settings</SelectItem>
+                  <SelectItem value="performance">Performance Metrics</SelectItem>
+                  <SelectItem value="dashboard">Dashboard</SelectItem>
+                  <SelectItem value="logs">System Logs</SelectItem>
+                  <SelectItem value="users">User Management</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Desktop tab navigation */}
+            <div className="hidden md:block">
+              <div className="flex flex-wrap gap-2 border-b border-border">
+                <button
+                  onClick={() => setActiveTab("duplicates")}
+                  className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors ${activeTab === "duplicates" ? "bg-primary text-primary-foreground" : "hover:bg-muted/60"}`}
+                >
+                  Duplicate Management
+                </button>
+                <button
+                  onClick={() => setActiveTab("settings")}
+                  className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors ${activeTab === "settings" ? "bg-primary text-primary-foreground" : "hover:bg-muted/60"}`}
+                >
+                  Detection Settings
+                </button>
+                <button
+                  onClick={() => setActiveTab("performance")}
+                  className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors ${activeTab === "performance" ? "bg-primary text-primary-foreground" : "hover:bg-muted/60"}`}
+                >
+                  Performance Metrics
+                </button>
+                <button
+                  onClick={() => setActiveTab("dashboard")}
+                  className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors ${activeTab === "dashboard" ? "bg-primary text-primary-foreground" : "hover:bg-muted/60"}`}
+                >
+                  Dashboard
+                </button>
+                <button
+                  onClick={() => setActiveTab("logs")}
+                  className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors ${activeTab === "logs" ? "bg-primary text-primary-foreground" : "hover:bg-muted/60"}`}
+                >
+                  System Logs
+                </button>
+                <button
+                  onClick={() => setActiveTab("users")}
+                  className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors ${activeTab === "users" ? "bg-primary text-primary-foreground" : "hover:bg-muted/60"}`}
+                >
+                  User Management
+                </button>
+              </div>
+            </div>
+          </div>
 
-              <TabsTrigger value="duplicates">Duplicate Management</TabsTrigger>
-              <TabsTrigger value="settings">Detection Settings</TabsTrigger>
-              <TabsTrigger value="performance">Performance Metrics</TabsTrigger>
-              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-              <TabsTrigger value="logs">System Logs</TabsTrigger>
-              <TabsTrigger value="users">User Management</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="duplicates">
+          {/* Tab content */}
+          <div>
+            {/* Duplicate Management Tab */}
+            {activeTab === "duplicates" && (
               <div className="space-y-4">
-                <div className="sm:flex sm:items-center sm:justify-between">
-                  <Input
-                    placeholder="Search feedback..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="mb-4 sm:mb-0 sm:w-80"
-                  />
-                </div>
                 <div className="space-y-4">
                   <div>
                     <Input
                       placeholder="Search feedback..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="mb-4"
+                      className="mb-4 w-full sm:w-80"
                     />
                   </div>
                   {duplicateGroups.length === 0 ? (
@@ -246,9 +364,10 @@ export function AdminPanel() {
                   )}
                 </div>
               </div>
-            </TabsContent>
+            )}
 
-            <TabsContent value="settings">
+            {/* Detection Settings Tab */}
+            {activeTab === "settings" && (
               <Card>
                 <CardHeader>
                   <CardTitle>Duplicate Detection Settings</CardTitle>
@@ -363,44 +482,39 @@ export function AdminPanel() {
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
+            )}
 
-            <TabsContent value="performance">
-              <div className="grid gap-4 md:grid-cols-2">
+            {/* Performance Metrics Tab */}
+            {activeTab === "performance" && (
+              <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                 <Card>
                   <CardHeader>
                     <CardTitle>Detection Accuracy</CardTitle>
                     <CardDescription>Performance metrics over time</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <ChartContainer
-                      id="accuracy-chart"
-                      config={{
-                        accuracy: { label: "Accuracy %", color: "#3b82f6" },
-                        falsePositives: { label: "False Positives", color: "#ef4444" },
-                        falseNegatives: { label: "False Negatives", color: "#f97316" },
-                      }}
-                      className="h-80"
-                    >
-                      <LineChart
-                        data={performanceData}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <ChartTooltip />
-                        <ChartLegend />
-                        <Line
-                          type="monotone"
-                          dataKey="accuracy"
-                          stroke="#3b82f6"
-                          activeDot={{ r: 8 }}
-                        />
-                        <Line type="monotone" dataKey="falsePositives" stroke="#ef4444" />
-                        <Line type="monotone" dataKey="falseNegatives" stroke="#f97316" />
-                      </LineChart>
-                    </ChartContainer>
+                    <div className="h-[300px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart
+                          data={performanceData}
+                          margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Line
+                            type="monotone"
+                            dataKey="accuracy"
+                            stroke="#3b82f6"
+                            activeDot={{ r: 8 }}
+                          />
+                          <Line type="monotone" dataKey="falsePositives" stroke="#ef4444" />
+                          <Line type="monotone" dataKey="falseNegatives" stroke="#f97316" />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -410,41 +524,35 @@ export function AdminPanel() {
                     <CardDescription>Performance by algorithm type</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <ChartContainer
-                      id="algorithm-comparison"
-                      config={{
-                        levenshtein: { label: "Levenshtein", color: "#3b82f6" },
-                        jaccard: { label: "Jaccard", color: "#8b5cf6" },
-                        cosine: { label: "Cosine", color: "#ec4899" },
-                        multi: { label: "Multi-algorithm", color: "#10b981" },
-                      }}
-                      className="h-80"
-                    >
-                      <BarChart
-                        data={[
-                          { name: "Accuracy", levenshtein: 88, jaccard: 85, cosine: 90, multi: 94 },
-                          { name: "Speed (ms)", levenshtein: 120, jaccard: 150, cosine: 200, multi: 250 },
-                          { name: "False Positives", levenshtein: 12, jaccard: 15, cosine: 8, multi: 5 },
-                        ]}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <ChartTooltip />
-                        <ChartLegend />
-                        <Bar dataKey="levenshtein" fill="#3b82f6" />
-                        <Bar dataKey="jaccard" fill="#8b5cf6" />
-                        <Bar dataKey="cosine" fill="#ec4899" />
-                        <Bar dataKey="multi" fill="#10b981" />
-                      </BarChart>
-                    </ChartContainer>
+                    <div className="h-[300px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={[
+                            { name: "Accuracy", levenshtein: 88, jaccard: 85, cosine: 90, multi: 94 },
+                            { name: "Speed (ms)", levenshtein: 120, jaccard: 150, cosine: 200, multi: 250 },
+                            { name: "False Positives", levenshtein: 12, jaccard: 15, cosine: 8, multi: 5 },
+                          ]}
+                          margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="levenshtein" fill="#3b82f6" />
+                          <Bar dataKey="jaccard" fill="#8b5cf6" />
+                          <Bar dataKey="cosine" fill="#ec4899" />
+                          <Bar dataKey="multi" fill="#10b981" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
-            </TabsContent>
+            )}
 
-            <TabsContent value="logs">
+            {/* System Logs Tab */}
+            {activeTab === "logs" && (
               <Card>
                 <CardHeader>
                   <CardTitle>System Logs</CardTitle>
@@ -478,35 +586,37 @@ export function AdminPanel() {
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
+            )}
 
-            <TabsContent value="users">
+            {/* User Management Tab */}
+            {activeTab === "users" && (
               <UserManagement />
-            </TabsContent>
+            )}
 
-            <TabsContent value="dashboard">
-              <div className="grid gap-4 md:grid-cols-2">
+            {/* Dashboard Tab */}
+            {activeTab === "dashboard" && (
+              <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                 <Card>
                   <CardHeader>
                     <CardTitle>Feedback by Category</CardTitle>
                     <CardDescription>Distribution of feedback across categories</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <ChartContainer
-                      id="category-dist"
-                      className="h-80"
-                    >
-                      <BarChart
-                        data={categoryData}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="category" />
-                        <YAxis />
-                        <ChartTooltip />
-                        <Bar dataKey="count" fill="#3b82f6" />
-                      </BarChart>
-                    </ChartContainer>
+                    <div className="h-[300px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={categoryData}
+                          margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="category" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="count" fill="#3b82f6" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -516,41 +626,35 @@ export function AdminPanel() {
                     <CardDescription>Feedback sentiment distribution</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <ChartContainer
-                      id="sentiment-dist"
-                      config={{
-                        Positive: { label: "Positive", color: "#10b981" },
-                        Neutral: { label: "Neutral", color: "#fcd34d" },
-                        Negative: { label: "Negative", color: "#ef4444" },
-                      }}
-                      className="h-80"
-                    >
-                      <PieChart>
-                        <Pie
-                          data={sentimentData}
-                          dataKey="value"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={80}
-                          label
-                        >
-                          {sentimentData.map((entry, index) => (
-                            <Cell
-                              key={`cell-${index}`}
-                              fill={["#10b981", "#fcd34d", "#ef4444"][index]}
-                            />
-                          ))}
-                        </Pie>
-                        <ChartTooltip />
-                        <ChartLegend />
-                      </PieChart>
-                    </ChartContainer>
+                    <div className="h-[300px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={sentimentData}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius="80%"
+                            label
+                          >
+                            {sentimentData.map((entry, index) => (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={["#10b981", "#fcd34d", "#ef4444"][index]}
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
-            </TabsContent>
-          </Tabs>
+            )}
+          </div>
         </CardContent>
         <CardFooter>
           <p className="text-xs text-gray-500">

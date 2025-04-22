@@ -5,8 +5,8 @@ import { v4 as uuidv4 } from "uuid"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { isFeedbackSimilar, shareKeyTerms, containsSubstring } from "../utils/similarity"
-import { logDuplicateCheck, logUserAction } from "../utils/logging"
-import { getCategoryConfig } from "../config/duplicateDetection"
+import { logDuplicateCheck, logUserAction, getDuplicateCheckLogs } from "../utils/logging"
+import { getCategoryConfig, updateDuplicateConfig, resetDuplicateConfig } from "../config/duplicateDetection"
 import supabaseAdmin from "@/app/lib/supabaseClient"
 import { feedbackSchema, rateLimitMap } from './feedbackHelpers';
 import sanitizeHtml from 'sanitize-html';
@@ -457,19 +457,110 @@ export async function voteFeedback(id: number, voteType: "upvote" | "downvote") 
 }
 
 export async function markAsDuplicate(id: number, originalId: number, logId?: string) {
-  const { error } = await supabaseAdmin
-    .from<Feedback>(feedbackTable)
-    .update({ status: "duplicate", duplicateOf: originalId })
-    .eq("id", id)
-  if (error) throw error
+  console.log(`[SERVER] markAsDuplicate called with id=${id}, originalId=${originalId}`);
+  
+  try {
+    // Validate inputs
+    if (!id || !originalId) {
+      throw new Error(`Invalid parameters: id=${id}, originalId=${originalId}`)
+    }
+    
+    // Make sure we're not marking an item as a duplicate of itself
+    if (id === originalId) {
+      throw new Error('Cannot mark an item as a duplicate of itself')
+    }
 
-  // Log user action if logId is provided
-  if (logId) {
-    logUserAction(logId, "marked_as_duplicate")
+    // First, let's check the table structure to understand what fields are available
+    console.log(`[SERVER] Checking feedback table structure...`);
+    const { data: tableInfo, error: tableError } = await supabaseAdmin
+      .from(feedbackTable)
+      .select('*')
+      .limit(1);
+    
+    if (tableError) {
+      console.error('[SERVER] Error fetching table structure:', tableError);
+      throw new Error(`Table structure error: ${tableError.message}`);
+    }
+    
+    // Log the structure of the first record to understand available fields
+    if (tableInfo && tableInfo.length > 0) {
+      console.log('[SERVER] Feedback table fields:', Object.keys(tableInfo[0]));
+    } else {
+      console.log('[SERVER] No records found in feedback table');
+    }
+
+    // Check if both feedback items exist
+    console.log(`[SERVER] Checking if original item #${originalId} exists...`);
+    const { data: originalItem, error: originalError } = await supabaseAdmin
+      .from(feedbackTable)
+      .select('id, status')
+      .eq('id', originalId)
+      .single();
+    
+    if (originalError) {
+      console.error(`[SERVER] Error finding original item #${originalId}:`, originalError);
+      throw new Error(`Original feedback error: ${originalError.message}`);
+    }
+    
+    if (!originalItem) {
+      console.error(`[SERVER] Original feedback item #${originalId} not found`);
+      throw new Error(`Original feedback item #${originalId} not found`);
+    }
+    
+    console.log(`[SERVER] Original item #${originalId} found with status: ${originalItem.status}`);
+
+    // Check if the item to be marked as duplicate exists
+    console.log(`[SERVER] Checking if item #${id} exists...`);
+    const { data: itemToUpdate, error: itemError } = await supabaseAdmin
+      .from(feedbackTable)
+      .select('id, status, duplicate_of')
+      .eq('id', id)
+      .single();
+    
+    if (itemError) {
+      console.error(`[SERVER] Error finding item #${id}:`, itemError);
+      throw new Error(`Item to update error: ${itemError.message}`);
+    }
+    
+    if (!itemToUpdate) {
+      console.error(`[SERVER] Feedback item #${id} not found`);
+      throw new Error(`Feedback item #${id} not found`);
+    }
+    
+    console.log(`[SERVER] Item #${id} found with status: ${itemToUpdate.status}`);
+
+    // Try a minimal update first - just the status and duplicate_of fields
+    console.log(`[SERVER] Attempting to update item #${id} as duplicate of #${originalId}...`);
+    const updateData = { 
+      status: "duplicate", 
+      duplicate_of: originalId 
+    };
+    
+    console.log('[SERVER] Update data:', updateData);
+    
+    const { error } = await supabaseAdmin
+      .from(feedbackTable)
+      .update(updateData)
+      .eq("id", id);
+    
+    if (error) {
+      console.error('[SERVER] Error updating feedback status:', error);
+      throw error;
+    }
+
+    console.log(`[SERVER] Successfully marked #${id} as duplicate of #${originalId}`);
+    
+    // Log user action if logId is provided
+    if (logId) {
+      logUserAction(logId, "marked_as_duplicate");
+    }
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (error) {
+    console.error('[SERVER] markAsDuplicate error:', error);
+    throw error;
   }
-
-  revalidatePath("/")
-  return { success: true }
 }
 
 export async function mergeFeedback(sourceId: number, targetId: number, logId?: string) {
@@ -517,7 +608,9 @@ export async function getDuplicateDetectionMetrics() {
   const falseNegatives = 1
   const averageSimilarityScore = 65
   const detectionAccuracy = 92
-  return { totalChecks, duplicatesDetected, falsePositives, falseNegatives, averageSimilarityScore, detectionAccuracy }
+  // Include system logs for duplicate detection events
+  const logs = getDuplicateCheckLogs()
+  return { totalChecks, duplicatesDetected, falsePositives, falseNegatives, averageSimilarityScore, detectionAccuracy, logs }
 }
 
 // Server action to update feedback status via Supabase RPC
